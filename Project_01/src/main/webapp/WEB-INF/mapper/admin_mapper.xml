@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3-0//EN"
+						"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="admin_db">
+	
+	<!-- 아이디 존재 여부 확인 -->
+	 <select id="check_admin_id" parameterType="java.lang.String" resultType="java.lang.String">
+        select admin_name
+        from admin_table
+        where admin_id = #{admin_id}
+    </select>
+    
+    <!-- 로그인 처리를 위한 쿼리문 -->
+    <select id="login_admin_pro" parameterType="com.test.beans.AdminBean" resultType="com.test.beans.AdminBean">
+    	
+    	select admin_idx
+    	from admin_table
+    	where admin_id = #{admin_id} and admin_pw = #{admin_pw}
+    
+    </select>
+    
+    <!-- 로그인한 사용자의 정보를 가져오는 쿼리문 -->
+    <select id="get_admin_info" parameterType="java.lang.Integer" resultType="com.test.beans.AdminBean">
+    	select admin_idx, admin_id, admin_pw, admin_name
+    	from admin_table
+    	where admin_idx = #{admin_idx}
+    </select>
+    
+</mapper>
+	

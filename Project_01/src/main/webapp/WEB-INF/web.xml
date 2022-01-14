@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.1"
+	xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee               
+	http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
+	
+	<!-- 현재 웹 애플리케이션에서 받아들이는 모든 요청에 대해 -->
+	<!-- appServlet이라는 이름으로 정의되어 있는 서블릿을 사용하도록 설정 -->
+	<servlet-mapping>
+		<servlet-name>appServlet</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+	
+	<!-- 요청 정보를 분석해서 컨트롤러를 선택하는 서블릿을 지정한다. -->
+	<servlet>
+		<servlet-name>appServlet</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<!-- Spring MVC 설정을 위한 xml 파일을 지정한다. -->
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>/WEB-INF/config/servlet-context.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+		<!-- 파일 업로드를 위한 설정 값 -->
+		<multipart-config>
+			<!-- 파일 하나의 최대 용량 -->
+			<max-file-size>52428800</max-file-size>
+			<!-- 전체 최대 용량 -->
+			<max-request-size>52428800</max-request-size>
+			<file-size-threshold>0</file-size-threshold>
+		</multipart-config>
+	</servlet>
+	
+	<!-- bean을 등록하기 위해 사용할 xml을 지정한다 -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+			<param-value>/WEB-INF/config/root-context.xml</param-value>
+	</context-param>
+	
+	<!-- 웹 서비스 수행 중 발생되는 이벤트를 잡는 리스너 -->
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<!-- 브라우저가 전달하는 파라미터 데이터의 한글이 깨지지 않도록 설정한다. -->
+	<filter>
+		<filter-name>encodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+		<init-param>
+			<param-name>forceEncoding</param-name>
+			<param-value>true</param-value>
+		</init-param>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>encodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<!-- 업로드된 파일 데이터가 있다면 저장처리를 하는 필터 -->
+	<filter>
+		<display-name>SpringMultipartFilter</display-name>
+		<filter-name>SpringMultipartFilter</filter-name>
+		<filter-class>org.springframework.web.multipart.support.MultipartFilter</filter-class>
+		<init-param>
+			<!-- servlet-context.xml 에 정의한 파일 업로드 처리 bean 등록 -->
+			<param-name>multipartResolverBeanName</param-name>
+			<param-value>multipartResolver</param-value>
+		</init-param>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>SpringMultipartFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+</web-app>

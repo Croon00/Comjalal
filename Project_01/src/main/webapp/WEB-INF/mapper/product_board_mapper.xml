@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3-0//EN"
+						"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="product_board_db">
+	
+	<!-- 게시판 정보를 가져온다. -->
+	<select id="select_product_board_info" resultType="com.test.beans.ProductBoardBean">
+		select product_board_idx, product_board_name
+		from product_board_table
+		order by product_board_idx
+	</select>
+	
+	
+	<!-- 상품 정보를 저장한다. -->
+	<insert id="add_product_data" parameterType="com.test.beans.ProductBean">
+	
+	<!-- 시퀀스 값을 증가 시키는 쿼리문 -->
+		<selectKey keyProperty="product_idx" order="BEFORE" resultType="java.lang.Integer">
+			select product_seq.nextval from dual
+		</selectKey>
+		
+		insert into product_table
+		(product_idx, product_name, product_code, product_made, product_notice_idx, product_writer_idx, product_file, product_file2, product_price, product_text, product_date)
+		values
+		(#{product_idx}, #{product_name}, #{product_code}, #{product_made}, #{product_notice_idx}, #{product_writer_idx}, #{product_file}, #{product_file2}, #{product_price}, #{product_text}, sysdate)
+	</insert>
+	
+	<!-- 상품 정보를 장바구니에 저장한다. -->
+	<insert id="add_cart_product_data" parameterType="com.test.beans.CartBean">
+	
+	<!-- 시퀀스 값을 증가 시키는 쿼리문 -->
+		<selectKey keyProperty="cart_idx" order="BEFORE" resultType="java.lang.Integer">
+			select cart_seq.nextval from dual
+		</selectKey>
+		
+		insert into cart_table
+		(cart_idx, cart_user_idx, cart_product_idx, amount)
+		values
+		(#{cart_idx}, #{cart_user_idx}, #{cart_product_idx}, #{amount})
+	</insert>
+	
+	<!-- 장바구니에서 체크한 상품을 저장한다 -->
+	<insert id="add_buytemp_data" parameterType="com.test.beans.BuytempBean">
+		
+		<!-- 시퀀스 값을 증가시키는 쿼리문 -->
+		<selectKey keyProperty="buytemp_idx" order="BEFORE" resultType="java.lang.Integer">
+			select buytemp_seq.nextval from dual
+		</selectKey>
+		
+		insert into buytemp_table
+		(buytemp_idx, buytemp_date, buytemp_num, buytemp_product_idx, buytemp_amount, buytemp_user_idx)
+		values
+		(#{buytemp_idx}, sysdate, #{buytemp_num}, #{buytemp_product_idx}, #{buytemp_amount}, #{buytemp_user_idx} )
+	</insert>
+	
+	<!-- 구매페이지 에서 결제를 눌렀을 때 결제 상품을 저장한다 -->
+	<insert id="add_ordered_data" parameterType="com.test.beans.OrderedBean">
+	
+		<!-- 시퀀스 값을 증가시키는 쿼리문 -->
+		<selectKey keyProperty="ordered_idx" order="BEFORE" resultType="java.lang.Integer">
+			select ordered_seq nextval from dual
+		</selectKey>
+		
+		insert into ordered_table
+		(ordered_idx, ordered_date, ordered_num, ordered_product_idx, ordered_amount, ordered_user_idx, ordered_name, ordered_phone, ordered_email, ordered_postal_code, ordered_addr1, ordered_addr2, ordered_required )
+		values
+		(#{ordered_idx}, #{ordered_date}, #{ordered_num}, #{ordered_product_idx}, #{ordered_amount}, #{ordered_user_idx}, #{ordered_name}, #{ordered_phone}, #{ordered_email}, #{ordered_postal_code}, #{ordered_addr1}, #{ordered_addr2}, #{ordered_required})
+		
+	</insert>
+	
+
+	<!-- 장바구니로 상품 목록을 가져온다. -->
+	<select id="get_cart_product_list" parameterType="java.lang.Integer"
+								  resultType="com.test.beans.CartBean">
+	select c.cart_idx,
+		   c.cart_product_idx,
+		   c.amount,
+		   p.product_idx,
+		   p.product_code,
+		   p.product_made,
+		   p.product_file,
+		   p.product_price,
+		   p.product_name,
+		   u.user_idx,
+		   (c.amount*p.product_price) money
+	from cart_table c, product_table p, user_table u
+	where c.cart_user_idx = u.user_idx
+		  and c.cart_product_idx = p.product_idx
+		  and cart_user_idx = #{user_index}
+		  
+	order by c.cart_idx		  
+	</select>
+	
+	<!-- 구매페이지로 장바구니에서 체크한 상품 목록을 가져온다 -->
+	<select id="get_order_product_list" parameterType="java.lang.Integer"
+										resultType="com.test.beans.BuytempBean">
+		select b.buytemp_idx,
+			   to_char(b.buytemp_date, 'YYYY-MM-DD HH24:MI:SS') as buytemp_date,
+			   b.buytemp_date,
+			   b.buytemp_num,
+			   b.buytemp_amount,
+			   p.product_price,
+			   p.product_name,
+			   p.product_file,
+			   u.user_idx,
+			   (b.buytemp_amount*p.product_price) money
+		from buytemp_table b, product_table p, user_table u
+		where b.buytemp_user_idx = u.user_idx
+			  and b.buytemp_product_idx = p.product_idx
+			  and buytemp_user_idx = #{user_index}
+			  and buytemp_date = sysdate
+		order by b.buytemp_idx	
+											
+	</select>
+	<!-- 상품 정보 하나를 가져온다. -->
+	<select id="select_product_info" parameterType="java.lang.Integer"
+								     resultType="com.test.beans.ProductBean">
+	select a1.product_idx,
+		   a1.product_name,
+		   a1.product_code,
+		   a1.product_made,
+		   to_char(a1.product_date, 'YYYY-MM-DD') as product_date,
+		   a1.product_notice_idx,
+		   a1.product_writer_idx,
+		   a1.product_file,
+		   a1.product_file2,
+		   a1.product_price,
+		   a1.product_text
+	from product_table a1, admin_table a2
+	where a1.product_idx = #{product_idx}
+								     
+	</select>
+	
+	<!-- 상품 목록을 가져온다. -->
+	<select id="get_product_list" parameterType="java.lang.Integer"
+								  resultType="com.test.beans.ProductBean">
+	select a1.product_idx,
+		   a1.product_name,
+		   a1.product_code,
+		   a1.product_made,
+		   to_char(a1.product_date, 'YYYY-MM-DD') as product_date,
+		   a1.product_notice_idx,
+		   a1.product_writer_idx,
+		   a1.product_file,
+		   a1.product_file2,
+		   a1.product_price,
+		   a1.product_text
+	from product_table a1, admin_table a2
+	where a1.product_writer_idx = a2.admin_idx
+		  and a1.product_notice_idx = #{product_board_idx}
+	order by a1.product_idx desc		  
+	</select>
+	
+	<!-- 게시판 정보 하나를 가져온다. -->
+	<select id="get_product_board_info" parameterType="java.lang.Integer"
+							 	        resultType="com.test.beans.ProductBoardBean">
+		select product_board_idx, product_board_name
+		from product_board_table
+		where product_board_idx = #{product_board_idx}
+								 	
+	</select>
+	
+	<!-- 전체 상품의 개수를 가져온다. -->
+		<select id="get_product_count" parameterType="java.lang.Integer"
+									   resultType="java.lang.Integer">
+		select count(*) from product_table
+		where product_notice_idx = #{product_notice_idx}
+			   
+		</select>
+		
+	<update id="update_product_info" parameterType="com.test.beans.ProductBean">
+		update product_table
+			set product_name = #{product_name},
+				product_code = #{product_code},
+				product_made = #{product_made},
+				product_file = #{product_file},
+				product_file2 = #{product_file2},
+				product_text = #{product_text}
+			where product_idx = #{product_idx}
+	</update>
+
+	<!-- 상품을 삭제한다 -->
+	<delete id="delete_product" parameterType="com.test.beans.ProductBean">
+		delete from product_table
+		where product_idx = #{product_idx}
+	</delete>
+	
+	<!-- 장바구니에서 상품을 삭제한다 -->
+	<delete id="delete_cart_product" parameterType="com.test.beans.CartBean">
+		delete from cart_table
+		where cart_idx = #{cart_idx}
+	</delete>
+	
+	<!-- 상품 제목에 따른 목록 검색 -->
+	<select id="search_product" parameterType="java.lang.String"
+								resultType="com.test.beans.ProductBean">
+		select 
+		   product_idx,
+		   product_name,
+		   product_code,
+		   product_made,
+		   to_char(product_date, 'YYYY-MM-DD') as product_date,
+		   product_notice_idx,
+		   product_writer_idx,
+		   product_file,
+		   product_file2,
+		   product_price,
+		   product_text
+		from product_table 
+		where product_name like #{keyword}
+		order by product_idx desc
+	</select>
+	
+	<select id="recent_video" parameterType="java.lang.Integer"
+							  resultType="com.test.beans.VideoBean">
+		select * from
+		(select * from video_table order by video_idx desc)
+		where rownum = 1
+			
+	</select>
+</mapper>
+
+
+
+
+

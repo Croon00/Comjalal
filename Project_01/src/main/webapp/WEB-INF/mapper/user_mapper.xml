@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3-0//EN"
+						"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="user_db">
+
+	<!-- 회원 데이터 저장 -->
+	<insert id="add_user_info" parameterType="com.test.beans.UserBean">
+		insert into user_table
+		(user_idx, user_id, user_pw, user_name, user_postal_code, user_addr1, user_addr2)
+		values
+		(user_seq.nextval, #{user_id}, #{user_pw}, #{user_name}, #{user_postal_code}, #{user_addr1}, #{user_addr2})
+	</insert>
+	
+	<!-- 아이디 존재 여부 확인 -->
+	<select id='check_user_id' parameterType="java.lang.String" resultType="java.lang.String">
+		select user_name from user_table
+		where user_id = #{user_id}
+	</select>
+	
+	<!-- 로그인 처리를 위한 쿼리문 -->
+	<select id="login_user_pro" parameterType="com.test.beans.UserBean" resultType="com.test.beans.UserBean">
+			
+			select user_idx from user_table
+			where user_id = #{user_id} and user_pw = #{user_pw}						
+									
+	</select>
+	
+	<!-- 로그인한 사용자의 정보를 가져오는 쿼리문 -->
+	<select id="get_user_info" parameterType="java.lang.Integer" resultType="com.test.beans.UserBean">
+		select user_idx, user_id, user_pw, user_name,
+			   user_postal_code, user_addr1, user_addr2
+		from user_table
+		where user_idx = #{user_idx}
+	</select>
+	
+	<!-- 회원정보 수정 -->
+	<update id="modify_user_info" parameterType="com.test.beans.UserBean">
+		update user_table
+		set user_pw = #{user_pw}, user_postal_code = #{user_postal_code},
+			user_addr1 = #{user_addr1}, user_addr2 = #{user_addr2}
+		where user_idx = #{user_idx}
+	</update>
+</mapper>
