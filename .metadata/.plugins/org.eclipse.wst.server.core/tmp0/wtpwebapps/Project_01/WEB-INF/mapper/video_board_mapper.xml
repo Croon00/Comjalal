@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3-0//EN"
+						"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="video_board_db">
+	
+	<!-- 게시판 정보를 가져온다. -->
+	<select id="select_video_board_info" resultType="com.test.beans.VideoBoardBean">
+		select video_board_idx, video_board_name
+		from video_board_table
+		order by video_board_idx
+	</select>
+	
+	<!-- 게시글 정보를 저장한다. -->
+	<insert id="add_video_data" parameterType="com.test.beans.VideoBean">
+	
+		<!-- 시퀀스의 값을 증가 시키는 쿼리문 -->
+		<!-- keyProperty : content_idx라고 했기 때문에 전달되는 bean 객체의 
+		content_idx 변수에 증가된 시퀀스 값이 주입된다.
+		order : BEFORE를 설정하였기 때문에 쿼리문 실행되기 전에 동작한다.
+		resultType : 증가된 시퀀스값을 자바코드에서 사용할 수 있도록 반환하는 값의 타입 -->
+		
+		<selectKey keyProperty="video_idx" order="BEFORE" resultType="java.lang.Integer">  
+			select video_seq.nextval from dual
+		</selectKey>
+		
+		insert into video_table
+		(video_idx, video_subject,video_url, video_notice_idx, video_writer_idx)
+		values
+		(#{video_idx}, #{video_subject}, #{video_url}, #{video_notice_idx}, #{video_writer_idx})
+	</insert>
+	
+	<!-- 영상 정보 하나를 가져온다. -->
+	<select id="select_video_info" parameterType="java.lang.Integer"
+									 resultType="com.test.beans.VideoBean">
+		 select a1.video_idx,
+		        a1.video_subject,
+		        a1.video_url,
+		        a1.video_notice_idx,
+		        a1.video_writer_idx
+		 from video_table a1, admin_table a2
+		 where a1.video_writer_idx = a2.admin_idx
+        	   and a1.video_idx = #{video_idx}
+	</select>
+	
+	<!-- 영상 정보 하나를 가져온다. -->
+	<select id="get_video_board_info" parameterType="java.lang.Integer"
+							 	resultType="com.test.beans.VideoBoardBean">
+		select video_board_idx, video_board_name
+		from video_board_table
+		where video_board_idx = #{video_board_idx}
+								 	
+	</select>
+	
+	<!-- 영상 목록을 가져온다 -->
+	<select id="get_video_list" parameterType="java.lang.Integer"
+	                              resultType="com.test.beans.VideoBean">
+		select a1.video_idx, 
+			   a1.video_subject,
+			   a1.video_url, 
+	           a1.video_notice_idx,
+         	   a1.video_writer_idx, 
+         	   a2.admin_name as video_writer_name
+		from video_table a1, admin_table a2
+		where a1.video_writer_idx = a2.admin_idx
+				<if test ="video_notice_idx != 0">
+              and a1.video_notice_idx = #{video_board_idx} 
+              	</if> 
+        order by a1.video_idx desc                          
+	</select>
+		
+	<!-- 영상을 삭제한다 -->
+	<delete id="delete_video" parameterType="com.test.beans.VideoBean">
+		delete from video_table
+		where video_idx = #{video_idx}
+	</delete>
+	
+	<!-- 영상 수정 -->
+	<update id="update_video_info" parameterType="com.test.beans.VideoBean">
+		update video_table
+			set video_subject = #{video_subject},
+				video_url = #{video_url},
+				video_notice_idx = #{video_notice_idx}
+			where video_idx = #{video_idx}
+	</update>
+	
+	<!-- 전체 글의 개수를 가져온다. -->
+	<select id="get_video_count" parameterType="java.lang.Integer"
+								   resultType="java.lang.Integer">
+		
+		select count(*) from video_table
+		where video_notice_idx = #{video_notice_idx}
+						   
+								   
+	</select>
+	
+	
+	
+</mapper>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3-0//EN"
+						"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="board_db">
+
+<!-- 게시판 정보를 가져온다. -->
+	<select id="select_board_info" resultType="com.test.beans.BoardBean">
+		select board_idx, board_name
+		from board_table
+		order by board_idx
+	</select>
+	
+	<!-- 게시글 정보를 저장한다. -->
+	<insert id="add_content_data" parameterType="com.test.beans.ContentBean">
+	
+		<!-- 시퀀스의 값을 증가 시키는 쿼리문 -->
+		<!-- keyProperty : content_idx라고 했기 때문에 전달되는 bean 객체의 
+		content_idx 변수에 증가된 시퀀스 값이 주입된다.
+		order : BEFORE를 설정하였기 때문에 쿼리문 실행되기 전에 동작한다.
+		resultType : 증가된 시퀀스값을 자바코드에서 사용할 수 있도록 반환하는 값의 타입 -->
+		
+		<selectKey keyProperty="content_idx" order="BEFORE" resultType="java.lang.Integer">  
+			select content_seq.nextval from dual
+		</selectKey>
+		
+		insert into content_table
+		(content_idx, content_subject, content_date, content_board_idx, content_writer_idx, content_file, content_text)
+		values
+		(#{content_idx}, #{content_subject}, sysdate, #{content_board_idx}, #{content_writer_idx}, #{content_file, jdbcType=VARCHAR}, #{content_text})
+	</insert>
+	
+	<!-- 게시글 정보 하나를 가져온다. -->
+	<select id="select_content_info" parameterType="java.lang.Integer"
+									 resultType="com.test.beans.ContentBean">
+		 select a1.content_idx, 
+				a1.content_subject, 
+				to_char(a1.content_date, 'YYYY-MM-DD') as content_date, 
+				a1.content_board_idx, 
+				a1.content_writer_idx, 
+				a1.content_file, 
+				a1.content_text,
+				a1.content_reply_text,
+				a2.user_name as content_writer_name
+		 from content_table a1, user_table a2
+		 where a1.content_writer_idx = a2.user_idx
+        	   and a1.content_idx=#{content_idx}
+	</select>
+	
+	<!-- 게시판 정보 하나를 가져온다. -->
+	<select id="get_board_info" parameterType="java.lang.Integer"
+							 	resultType="com.test.beans.BoardBean">
+		select board_idx, board_name
+		from board_table
+		where board_idx = #{board_idx}
+								 	
+	</select>
+	
+	<!-- 게시글 목록을 가져온다 -->
+	<select id="get_content_list" parameterType="java.lang.Integer"
+	                              resultType="com.test.beans.ContentBean">
+		select a1.content_idx, a1.content_subject, 
+	    	   to_char(a1.content_date, 'YYYY-MM-DD') as content_date, 
+	           a1.content_board_idx,
+         	   a1.content_writer_idx,
+         	   a1.content_file, 
+         	   a1.content_text,
+         	   a1.content_reply_text,
+         	   a2.user_name as content_writer_name
+		from content_table a1, user_table a2
+		where a1.content_writer_idx = a2.user_idx
+              and a1.content_board_idx = #{board_idx}   
+        order by a1.content_idx desc                          
+	</select>
+	
+	<!-- 글을 삭제한다 -->
+	<delete id="delete_content" parameterType="com.test.beans.ContentBean">
+		delete from content_table
+		where content_idx = #{content_idx}
+	</delete>
+	
+	<!-- 글 수정 -->
+	<update id="update_content_info" parameterType="com.test.beans.ContentBean">
+		update content_table
+			set content_subject = #{content_subject},
+				content_text = #{content_text}
+				<if test="content_file != null">
+				,content_file = #{content_file},
+				</if>
+			where content_idx = #{content_idx}
+	</update>
+	
+	<!-- 답변 달기 -->
+	<update id="update_content_reply" parameterType="com.test.beans.ContentBean">
+		update content_table
+			set content_reply_text = #{content_reply_text}
+			where content_idx = #{content_idx}
+	
+	</update>
+	
+	<!-- 전체 글의 개수를 가져온다. -->
+	<select id="get_content_count" parameterType="java.lang.Integer"
+								   resultType="java.lang.Integer">
+		
+		select count(*) from content_table
+		where content_board_idx = #{content_board_idx}
+						   
+								   
+	</select>
+</mapper>
+
